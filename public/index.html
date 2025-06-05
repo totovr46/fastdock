@@ -363,7 +363,6 @@
 </head>
 <body>
     <div class="header-container">
-        
         <button class="refresh-btn" onclick="fetchContainers()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
@@ -380,19 +379,19 @@
 
     <div id="settingsModal" class="modal">
         <div class="modal-content">
-            <h3 class="modal-title">Modifica Container</h3>
+            <h3 class="modal-title">Edit Container</h3>
             <form id="settingsForm">
                 <div class="modal-input-group">
-                    <label>Icona Container</label>
+                    <label>Container Icon</label>
                     <input type="file" id="iconInput" accept="image/*" class="modal-input">
                 </div>
                 <div class="modal-input-group">
-                    <label>Nome Container</label>
+                    <label>Container Name</label>
                     <input type="text" id="nameInput" class="modal-input">
                 </div>
                 <div class="modal-buttons">
-                    <button type="button" class="action-button stop-button" onclick="closeModal()">Annulla</button>
-                    <button type="submit" class="action-button start-button">Salva</button>
+                    <button type="button" class="action-button stop-button" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="action-button start-button">Save</button>
                 </div>
             </form>
         </div>
@@ -570,11 +569,11 @@
                 
                 if (!response.ok) throw new Error('Failed to update settings');
                 
-                showNotification('Impostazioni salvate con successo');
+                showNotification('Settings saved successfully');
                 closeModal();
                 fetchContainers(); 
             } catch (error) {
-                showNotification('Errore nel salvataggio delle impostazioni', true);
+                showNotification('Error saving settings', true);
             }
         };
         document.addEventListener('DOMContentLoaded', fetchContainers);
