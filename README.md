@@ -5,7 +5,7 @@ A simple web-based Docker container management interface with a modern design. T
 🎯 [Live Demo](https://fastdock.salvatoremusumeci.org)
 
 
-![Fastdock Interface](./public/assets/fast-demo.png)
+![Fastdock Interface](fast-demo.png)
 
 ## ⚠️ Security Notice
 
