@@ -1,5 +1,5 @@
 {
-  "name": "docker-manager",
+  "name": "fastdock",
   "version": "1.0.0",
   "description": "Sistema web-based per gestire container Docker",
   "main": "server.js",
@@ -15,7 +15,7 @@
     "management",
     "api"
   ],
-  "author": "Tu",
+  "author": "Toto",
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
