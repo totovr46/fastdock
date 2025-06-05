@@ -2,7 +2,7 @@
 
 A simple web-based Docker container management interface with a modern design. This application provides a fast and intuitive way to start and stop Docker containers on the go through a beautiful web interface.
 
-🎯 [Live Demo](https://fastdock.salvatoremusumeci.org)
+🎯 [Live Demo](https://fastdock.salvatoremusumeci.com)
 
 
 ![Fastdock Interface](fast-demo.png)
