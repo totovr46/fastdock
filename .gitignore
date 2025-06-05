@@ -1,0 +1,7 @@
+/public/assets/*
+
+/public/containerSettings.json
+
+/logs/*
+
+/node_modules/
