@@ -129,7 +129,6 @@ docker ps
 2. **View Containers**: See all containers for the selected server
 3. **Start/Stop**: Use the buttons to manage containers as usual
 4. **Edit Container**: Click the pencil icon to change name or icon
-5. **Refresh**: Refresh the container list for the current server
 
 ### Container Customization
 
