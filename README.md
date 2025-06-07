@@ -152,3 +152,4 @@ docker ps
 ---
 
 **⚠️ Important**: This application provides direct access to Docker containers. Use only in secure, controlled environments with trusted users.
+![icon](Icon.png)
