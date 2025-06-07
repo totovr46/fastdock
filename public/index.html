@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FastDock</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <style>
         * {
             margin: 0;
@@ -44,24 +45,7 @@
             font-size: 1.1rem;
         }
 
-        .refresh-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-left: 15px;
-        }
-
-        .refresh-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: rotate(180deg);
-        }
+        
 
         .container-grid {
             display: grid;
@@ -160,6 +144,13 @@
             text-align: center;
             position: relative;
             z-index: 1;
+        }
+
+        .container-server {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
+            font-style: italic;
         }
 
         .container-status {
@@ -290,6 +281,82 @@
             margin-bottom: 20px;
         }
 
+        .server-selector-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .server-selector {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: white;
+            padding: 8px 15px;
+            font-size: 1rem;
+            min-width: 200px;
+        }
+
+        .add-server-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .add-server-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .delete-server-btn {
+            background: rgba(244, 67, 54, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #f44336;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .delete-server-btn:hover {
+            background: rgba(244, 67, 54, 0.3);
+            transform: scale(1.1);
+        }
+
+        .edit-server-btn {
+            background: rgba(255, 193, 7, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #ffc107;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .edit-server-btn:hover {
+            background: rgba(255, 193, 7, 0.3);
+            transform: scale(1.1);
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -359,16 +426,69 @@
             align-items: center;
             justify-content: center;
         }
+
+        #editServerModal {
+            display: none;
+        }
+
+        .modal-button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 100px;
+            color: white;
+        }
+
+        .modal-button.cancel {
+            background: linear-gradient(45deg, #f44336, #FF5722);
+        }
+
+        .modal-button.cancel:hover {
+            background: linear-gradient(45deg, #da190b, #E64A19);
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+
+        .modal-button.confirm {
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+        }
+
+        .modal-button.confirm:hover {
+            background: linear-gradient(45deg, #45a049, #7CB342);
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
     </style>
 </head>
 <body>
-    <div class="header-container">
-        <button class="refresh-btn" onclick="fetchContainers()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                <path d="M3 3v5h5"></path>
-                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
-                <path d="M16 16h5v5"></path>
+   
+
+    <div class="server-selector-container">
+        <select id="serverSelector" class="server-selector">
+            <option value="local">Local Server</option>
+        </select>
+        <button class="add-server-btn" onclick="showAddServerModal()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+        <button id="editServerBtn" class="edit-server-btn" onclick="showEditServerModal()" style="display: none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+            </svg>
+        </button>
+        <button id="deleteServerBtn" class="delete-server-btn" onclick="deleteCurrentServer()" style="display: none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
             </svg>
         </button>
     </div>
@@ -397,9 +517,62 @@
         </div>
     </div>
 
+    <div id="addServerModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">Add another Server</h3>
+            <form id="addServerForm">
+                <div class="modal-input-group">
+                    <label>Server name</label>
+                    <input type="text" id="serverName" class="modal-input" required>
+                </div>
+                <div class="modal-input-group">
+                    <label>Address</label>
+                    <input type="text" id="serverAddress" class="modal-input" required 
+                           placeholder="e.g: http://192.168.1.5">
+                </div>
+                <div class="modal-input-group">
+                    <label>Port</label>
+                    <input type="number" id="serverPort" class="modal-input" required
+                           placeholder="e.g: 3080">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="action-button stop-button" 
+                            onclick="closeAddServerModal()">Cancel</button>
+                    <button type="submit" class="action-button start-button">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="editServerModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">Edit Server</h3>
+            <form id="editServerForm">
+                <div class="modal-input-group">
+                    <label for="editServerName">Server name:</label>
+                    <input type="text" id="editServerName" class="modal-input" required>
+                </div>
+                <div class="modal-input-group">
+                    <label for="editServerAddress">Address:</label>
+                    <input type="text" id="editServerAddress" class="modal-input" required>
+                </div>
+                <div class="modal-input-group">
+                    <label for="editServerPort">Port:</label>
+                    <input type="number" id="editServerPort" class="modal-input" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeEditServerModal()" class="modal-button cancel">Cancel</button>
+                    <button type="submit" class="modal-button confirm">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         let containers = [];
         let currentContainerId = null;
+        let currentBaseUrl = '';
+        let servers = [];
         const containerGrid = document.getElementById('containerGrid');
         const modal = document.getElementById('settingsModal');
         const settingsForm = document.getElementById('settingsForm');
@@ -414,7 +587,8 @@
             try {
                 containerGrid.innerHTML = '<div class="loading-message">Loading containers...</div>';
                 
-                const response = await fetch('/api/containers');
+                const apiUrl = currentBaseUrl ? `${currentBaseUrl}/api/containers` : '/api/containers';
+                const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error('Network response was not ok');
                 
                 containers = await response.json();
@@ -426,7 +600,7 @@
             }
         }
         
-        async function renderContainers() {
+        async function renderContainers(showServerName = false) {
             const settings = await loadContainerSettings();
             
             if (containers.length === 0) {
@@ -441,13 +615,9 @@
                 const name = containerSettings.customName || container.name;
                 const iconPath = containerSettings.iconPath;
                 const isRunning = container.state === 'running';
-                const shortId = container.id.substring(0, 8);
                 
-                let icon = '◻';
-                let iconClass = '';
-
                 const card = document.createElement('div');
-                card.className = `container-card ${iconClass}`;
+                card.className = 'container-card';
                 card.dataset.id = container.id;
                 card.dataset.name = name;
                 
@@ -463,6 +633,7 @@
                         ${iconPath ? `<img src="${iconPath}" alt="${name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : '◻'}
                     </div>
                     <div class="container-name">${name}</div>
+                    ${showServerName ? `<div class="container-server">${container.serverName || 'Local Server'}</div>` : ''}
                     <div class="container-status">${container.status}</div>
                     <button class="action-button ${isRunning ? 'stop-button' : 'start-button'}" 
                             onclick="toggleContainer('${container.id}', ${isRunning})">
@@ -489,7 +660,11 @@
             
             try {
                 const endpoint = isCurrentlyRunning ? 'stop' : 'start';
-                const response = await fetch(`/api/containers/${containerId}/${endpoint}`, {
+                const apiUrl = currentBaseUrl ? 
+                    `${currentBaseUrl}/api/containers/${containerId}/${endpoint}` : 
+                    `/api/containers/${containerId}/${endpoint}`;
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST'
                 });
                 
@@ -513,7 +688,6 @@
                     statusText.textContent = 'Running';
                 }
                 
-                // Aggiorna l'attributo onclick del pulsante con il nuovo stato
                 button.onclick = () => toggleContainer(containerId, !isCurrentlyRunning);
                 
                 showNotification(`Container "${containerName}" ${isCurrentlyRunning ? 'stopped' : 'started'} successfully`);
@@ -586,6 +760,210 @@
             }
         };
         document.addEventListener('DOMContentLoaded', fetchContainers);
+
+
+        async function loadServerSettings() {
+            try {
+                const response = await fetch('/api/app-settings');
+                const settings = await response.json();
+                servers = settings.servers || [];
+                updateServerSelector();
+            } catch (error) {
+                console.error('Error loading server settings:', error);
+            }
+        }
+
+
+        function updateServerSelector() {
+            const selector = document.getElementById('serverSelector');
+            selector.innerHTML = '<option value="local">Local Server</option>';
+            
+            servers.forEach((server, index) => {
+                selector.innerHTML += `
+                    <option value="${index}">${server.name}</option>
+                `;
+            });
+            
+            if (servers.length > 0) {
+                selector.innerHTML += '<option value="all">All Servers</option>';
+            }
+        }
+
+
+        document.getElementById('serverSelector').addEventListener('change', async function(e) {
+            const selectedValue = e.target.value;
+            const deleteButton = document.getElementById('deleteServerBtn');
+            const editButton = document.getElementById('editServerBtn');
+            
+            deleteButton.style.display = 'none';
+            editButton.style.display = 'none';
+
+            if (selectedValue === 'all') {
+                try {
+
+                    const allContainers = [];
+                    
+
+                    const localResponse = await fetch('/api/containers');
+                    if (localResponse.ok) {
+                        const localContainers = await localResponse.json();
+                        allContainers.push(...localContainers.map(c => ({...c, serverName: 'Local Server'})));
+                    }
+
+
+                    for (const server of servers) {
+                        const url = `${server.address}:${server.port}/api/containers`;
+                        try {
+                            const response = await fetch(url);
+                            if (response.ok) {
+                                const containers = await response.json();
+                                allContainers.push(...containers.map(c => ({...c, serverName: server.name})));
+                            }
+                        } catch (error) {
+                            console.error(`Error fetching containers from ${server.name}:`, error);
+                        }
+                    }
+
+                    containers = allContainers;
+                    renderContainers(true);
+                } catch (error) {
+                    console.error('Error loading all containers:', error);
+                    showNotification('Error loading all containers', true);
+                }
+            } else if (selectedValue === 'local') {
+                currentBaseUrl = '';
+                fetchContainers();
+            } else {
+                const server = servers[parseInt(selectedValue)];
+                currentBaseUrl = `${server.address}:${server.port}`;
+                deleteButton.style.display = 'flex';
+                editButton.style.display = 'flex';
+                fetchContainers();
+            }
+        });
+
+
+        function showAddServerModal() {
+            document.getElementById('addServerModal').style.display = 'block';
+        }
+
+
+        function closeAddServerModal() {
+            document.getElementById('addServerModal').style.display = 'none';
+            document.getElementById('addServerForm').reset();
+        }
+
+
+        document.getElementById('addServerForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const serverData = {
+                name: document.getElementById('serverName').value,
+                address: document.getElementById('serverAddress').value,
+                port: document.getElementById('serverPort').value
+            };
+            
+            try {
+                const response = await fetch('/api/app-settings/servers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(serverData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to save server');
+                
+                const result = await response.json();
+                servers = result.servers;
+                updateServerSelector();
+                closeAddServerModal();
+                showNotification('Server added successfully');
+            } catch (error) {
+                showNotification('Error saving server', true);
+            }
+        };
+
+
+                async function deleteCurrentServer() {
+            const selector = document.getElementById('serverSelector');
+            const selectedIndex = selector.value;
+            
+            if (selectedIndex === 'local') return;
+            
+            if (!confirm('Are you sure you want to delete this server? This action cannot be undone.')) return;
+            
+            try {
+                const response = await fetch(`/api/app-settings/servers/${selectedIndex}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) throw new Error('Failed to delete server');
+                
+                showNotification('Server deleted successfully');
+                
+        
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+                
+            } catch (error) {
+                showNotification('Error deleting server', true);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            loadServerSettings();
+            fetchContainers();
+        });
+
+        function showEditServerModal() {
+            const selectedIndex = document.getElementById('serverSelector').value;
+            if (selectedIndex === 'local') return;
+            
+            const server = servers[parseInt(selectedIndex)];
+            document.getElementById('editServerName').value = server.name;
+            document.getElementById('editServerAddress').value = server.address;
+            document.getElementById('editServerPort').value = server.port;
+            
+            document.getElementById('editServerModal').style.display = 'block';
+        }
+
+        function closeEditServerModal() {
+            document.getElementById('editServerModal').style.display = 'none';
+        }
+
+        document.getElementById('editServerForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const selectedIndex = document.getElementById('serverSelector').value;
+            if (selectedIndex === 'local') return;
+            
+            const serverData = {
+                name: document.getElementById('editServerName').value,
+                address: document.getElementById('editServerAddress').value,
+                port: document.getElementById('editServerPort').value
+            };
+            
+            try {
+                const response = await fetch(`/api/app-settings/servers/${selectedIndex}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(serverData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to update server');
+                
+                const result = await response.json();
+                servers = result.servers;
+                updateServerSelector();
+                closeEditServerModal();
+                showNotification('Server updated successfully');
+            } catch (error) {
+                showNotification('Error updating server', true);
+            }
+        };
     </script>
 </body>
 </html>

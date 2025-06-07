@@ -1,6 +1,7 @@
 /public/assets/*
 
 /public/containerSettings.json
+/public/appSettings.json
 
 /logs/*
 
