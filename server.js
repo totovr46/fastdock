@@ -119,4 +119,81 @@ app.get('/api/containers/settings', (req, res) => {
   }
 });
 
+app.get('/api/app-settings', (req, res) => {
+  try {
+    const settings = JSON.parse(fs.readFileSync('public/appSettings.json', 'utf8'));
+    res.json(settings);
+  } catch (error) {
+    res.json({ servers: [] });
+  }
+});
+
+app.post('/api/app-settings/servers', express.json(), (req, res) => {
+  try {
+    const { name, address, port } = req.body;
+    let settings = { servers: [] };
+    
+    try {
+      settings = JSON.parse(fs.readFileSync('public/appSettings.json', 'utf8'));
+    } catch (err) {
+      settings = { servers: [] };
+    }
+    
+    settings.servers.push({ name, address, port });
+    fs.writeFileSync('public/appSettings.json', JSON.stringify(settings, null, 2));
+    
+    res.json({ success: true, servers: settings.servers });
+  } catch (error) {
+    res.status(500).json({ error: 'Error saving server settings', details: error.message });
+  }
+});
+
+
+app.delete('/api/app-settings/servers/:index', (req, res) => {
+  try {
+    const serverIndex = parseInt(req.params.index);
+    let settings = { servers: [] };
+    
+    try {
+      settings = JSON.parse(fs.readFileSync('public/appSettings.json', 'utf8'));
+    } catch (err) {
+      settings = { servers: [] };
+    }
+    
+    if (serverIndex >= 0 && serverIndex < settings.servers.length) {
+      settings.servers.splice(serverIndex, 1);
+      fs.writeFileSync('public/appSettings.json', JSON.stringify(settings, null, 2));
+      res.json({ success: true, servers: settings.servers });
+    } else {
+      res.status(404).json({ error: 'Server not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Error deleting server', details: error.message });
+  }
+});
+
+app.put('/api/app-settings/servers/:index', express.json(), (req, res) => {
+  try {
+    const serverIndex = parseInt(req.params.index);
+    const { name, address, port } = req.body;
+    let settings = { servers: [] };
+    
+    try {
+      settings = JSON.parse(fs.readFileSync('public/appSettings.json', 'utf8'));
+    } catch (err) {
+      settings = { servers: [] };
+    }
+    
+    if (serverIndex >= 0 && serverIndex < settings.servers.length) {
+      settings.servers[serverIndex] = { name, address, port };
+      fs.writeFileSync('public/appSettings.json', JSON.stringify(settings, null, 2));
+      res.json({ success: true, servers: settings.servers });
+    } else {
+      res.status(404).json({ error: 'Server not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Error updating server', details: error.message });
+  }
+});
+
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
