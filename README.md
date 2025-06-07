@@ -1,3 +1,4 @@
+![icon](Icon2Nobg.png)
 # Fastdock
 
 A simple web-based Docker container management interface with a modern design. This application provides a fast and intuitive way to start and stop Docker containers on the go through a beautiful web interface.
