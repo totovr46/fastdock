@@ -495,6 +495,12 @@
                 
                 if (!response.ok) throw new Error('Operation failed');
                 
+                const containerIndex = containers.findIndex(c => c.id === containerId);
+                if (containerIndex !== -1) {
+                    containers[containerIndex].state = isCurrentlyRunning ? 'stopped' : 'running';
+                    containers[containerIndex].status = isCurrentlyRunning ? 'Stopped' : 'Up';
+                }
+
                 if (isCurrentlyRunning) {
                     button.textContent = 'Start';
                     button.className = 'action-button start-button';
@@ -506,6 +512,9 @@
                     statusIndicator.className = 'status-indicator running';
                     statusText.textContent = 'Running';
                 }
+                
+                // Aggiorna l'attributo onclick del pulsante con il nuovo stato
+                button.onclick = () => toggleContainer(containerId, !isCurrentlyRunning);
                 
                 showNotification(`Container "${containerName}" ${isCurrentlyRunning ? 'stopped' : 'started'} successfully`);
             } catch (error) {
