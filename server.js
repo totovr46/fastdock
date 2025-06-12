@@ -196,4 +196,24 @@ app.put('/api/app-settings/servers/:index', express.json(), (req, res) => {
   }
 });
 
+app.put('/api/app-settings/sort', express.json(), (req, res) => {
+  try {
+    const { containerSort } = req.body;
+    let settings = { servers: [], containerSort: 'none' };
+    
+    try {
+      settings = JSON.parse(fs.readFileSync('public/appSettings.json', 'utf8'));
+    } catch (err) {
+      settings = { servers: [], containerSort: 'none' };
+    }
+    
+    settings.containerSort = containerSort;
+    fs.writeFileSync('public/appSettings.json', JSON.stringify(settings, null, 2));
+    
+    res.json({ success: true, settings });
+  } catch (error) {
+    res.status(500).json({ error: 'Error saving sort preference', details: error.message });
+  }
+});
+
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

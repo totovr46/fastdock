@@ -464,6 +464,41 @@
             transform: scale(1.05);
             box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
         }
+
+        .sort-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .sort-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            padding: 10px 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .sort-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .sort-button svg {
+        transition: transform 0.3s ease;
+        }
+
+        .sort-button[data-sort="started"] svg {
+            transform: rotate(180deg);
+        }
+
+        .sort-button[data-sort="stopped"] svg {
+            transform: rotate(0deg);
+        }
     </style>
 </head>
 <body>
@@ -490,6 +525,17 @@
                 <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
                 <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
             </svg>
+        </button>
+    </div>
+
+    <div class="sort-container">
+        <button id="sortButton" class="sort-button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18"></path>
+                <path d="M7 12h10"></path>
+                <path d="M11 18h2"></path>
+            </svg>
+            <span id="sortLabel">Sort: None</span>
         </button>
     </div>
 
@@ -964,6 +1010,91 @@
                 showNotification('Error updating server', true);
             }
         };
+
+        let currentSort = 'none';
+
+        async function loadSortPreference() {
+            try {
+                const response = await fetch('/api/app-settings');
+                const settings = await response.json();
+                currentSort = settings.containerSort || 'none';
+                updateSortButton();
+                sortContainers();
+            } catch (error) {
+                console.error('Error loading sort preference:', error);
+            }
+        }
+
+        async function saveSortPreference(sortType) {
+            try {
+                const response = await fetch('/api/app-settings/sort', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ containerSort: sortType })
+                });
+                
+                if (!response.ok) throw new Error('Failed to save sort preference');
+            } catch (error) {
+                console.error('Error saving sort preference:', error);
+            }
+        }
+
+        function updateSortButton() {
+            const button = document.getElementById('sortButton');
+            const label = document.getElementById('sortLabel');
+            button.dataset.sort = currentSort;
+            label.textContent = `Sort: ${currentSort.charAt(0).toUpperCase() + currentSort.slice(1)}`;
+        }
+
+        function sortContainers() {
+            if (!containers || containers.length === 0) return;
+
+            switch (currentSort) {
+                case 'started':
+                    containers.sort((a, b) => {
+                        if (a.state === 'running' && b.state !== 'running') return -1;
+                        if (a.state !== 'running' && b.state === 'running') return 1;
+                        return 0;
+                    });
+                    break;
+                case 'stopped':
+                    containers.sort((a, b) => {
+                        if (a.state !== 'running' && b.state === 'running') return -1;
+                        if (a.state === 'running' && b.state !== 'running') return 1;
+                        return 0;
+                    });
+                    break;
+                default:
+                    // No sorting, use original order
+                    break;
+            }
+
+            renderContainers();
+        }
+
+        document.getElementById('sortButton').addEventListener('click', async () => {
+            switch (currentSort) {
+                case 'none':
+                    currentSort = 'started';
+                    break;
+                case 'started':
+                    currentSort = 'stopped';
+                    break;
+                default:
+                    currentSort = 'none';
+            }
+            
+            updateSortButton();
+            await saveSortPreference(currentSort);
+            sortContainers();
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+            loadServerSettings();
+            loadSortPreference();
+            fetchContainers();
+        });
     </script>
 </body>
 </html>
