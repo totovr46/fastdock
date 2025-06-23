@@ -638,10 +638,13 @@
                 if (!response.ok) throw new Error('Network response was not ok');
                 
                 containers = await response.json();
-                renderContainers();
+                
+                sortContainers();
+                
+                await renderContainers();
             } catch (error) {
                 console.error('Error fetching containers:', error);
-                showNotification('Error loading containers: ' + error.message, true);
+                showNotification('Error fetching containers: ' + error.message, true);
                 containerGrid.innerHTML = '<div class="error-message">Failed to load containers. Please try again.</div>';
             }
         }
@@ -1011,34 +1014,15 @@
             }
         };
 
-        let currentSort = 'none';
-
+        let currentSort = localStorage.getItem('containerSort') || 'started'; 
         async function loadSortPreference() {
-            try {
-                const response = await fetch('/api/app-settings');
-                const settings = await response.json();
-                currentSort = settings.containerSort || 'none';
-                updateSortButton();
-                sortContainers();
-            } catch (error) {
-                console.error('Error loading sort preference:', error);
+            currentSort = localStorage.getItem('containerSort');
+            if (currentSort !== 'started' && currentSort !== 'stopped') {
+                currentSort = 'started';
+                localStorage.setItem('containerSort', currentSort);
             }
-        }
-
-        async function saveSortPreference(sortType) {
-            try {
-                const response = await fetch('/api/app-settings/sort', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ containerSort: sortType })
-                });
-                
-                if (!response.ok) throw new Error('Failed to save sort preference');
-            } catch (error) {
-                console.error('Error saving sort preference:', error);
-            }
+            updateSortButton();
+            sortContainers();
         }
 
         function updateSortButton() {
@@ -1051,45 +1035,27 @@
         function sortContainers() {
             if (!containers || containers.length === 0) return;
 
-            switch (currentSort) {
-                case 'started':
-                    containers.sort((a, b) => {
-                        if (a.state === 'running' && b.state !== 'running') return -1;
-                        if (a.state !== 'running' && b.state === 'running') return 1;
-                        return 0;
-                    });
-                    break;
-                case 'stopped':
-                    containers.sort((a, b) => {
-                        if (a.state !== 'running' && b.state === 'running') return -1;
-                        if (a.state === 'running' && b.state !== 'running') return 1;
-                        return 0;
-                    });
-                    break;
-                default:
-                    // No sorting, use original order
-                    break;
-            }
+            containers.sort((a, b) => {
+                if (currentSort === 'started') {
+                    if (a.state === 'running' && b.state !== 'running') return -1;
+                    if (a.state !== 'running' && b.state === 'running') return 1;
+                } else { // stopped
+                    if (a.state !== 'running' && b.state === 'running') return -1;
+                    if (a.state === 'running' && b.state !== 'running') return 1;
+                }
+                return 0;
+            });
 
             renderContainers();
         }
 
-        document.getElementById('sortButton').addEventListener('click', async () => {
-            switch (currentSort) {
-                case 'none':
-                    currentSort = 'started';
-                    break;
-                case 'started':
-                    currentSort = 'stopped';
-                    break;
-                default:
-                    currentSort = 'none';
-            }
-            
+        document.getElementById('sortButton').addEventListener('click', () => {
+            currentSort = currentSort === 'started' ? 'stopped' : 'started';
+            localStorage.setItem('containerSort', currentSort);
             updateSortButton();
-            await saveSortPreference(currentSort);
             sortContainers();
         });
+
         document.addEventListener('DOMContentLoaded', () => {
             loadServerSettings();
             loadSortPreference();
