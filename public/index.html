@@ -469,6 +469,7 @@
             display: flex;
             align-items: center;
             margin-bottom: 20px;
+            gap: 10px;
         }
 
         .sort-button {
@@ -499,6 +500,50 @@
         .sort-button[data-sort="stopped"] svg {
             transform: rotate(0deg);
         }
+
+        .columns-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            padding: 10px 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .columns-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+
+        .sort-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+
+        .grid-cols-1 {
+            grid-template-columns: 1fr !important;
+        }
+
+        .grid-cols-2 {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+
+        .grid-cols-3 {
+            grid-template-columns: repeat(3, 1fr) !important;
+        }
+
+        .grid-cols-4 {
+            grid-template-columns: repeat(4, 1fr) !important;
+        }
     </style>
 </head>
 <body>
@@ -528,6 +573,7 @@
         </button>
     </div>
 
+
     <div class="sort-container">
         <button id="sortButton" class="sort-button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -535,7 +581,14 @@
                 <path d="M7 12h10"></path>
                 <path d="M11 18h2"></path>
             </svg>
-            <span id="sortLabel">Sort: None</span>
+            <span id="sortLabel">Sort: </span>
+        </button>
+        <button id="columnsButton" class="columns-button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="18"></rect>
+                <rect x="14" y="3" width="7" height="18"></rect>
+            </svg>
+            <span id="columnsLabel">Columns: </span>
         </button>
     </div>
 
@@ -1056,11 +1109,66 @@
             sortContainers();
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadServerSettings();
-            loadSortPreference();
-            fetchContainers();
-        });
+        let currentColumns = parseInt(localStorage.getItem('gridColumns')) || (window.innerWidth <= 768 ? 1 : 3);
+
+function updateGridColumns() {
+    const containerGrid = document.getElementById('containerGrid');
+    const columnsLabel = document.getElementById('columnsLabel');
+    const isMobile = window.innerWidth <= 768;
+    
+
+    containerGrid.classList.remove('grid-cols-1', 'grid-cols-2', 'grid-cols-3', 'grid-cols-4');
+    
+
+    containerGrid.classList.add(`grid-cols-${currentColumns}`);
+    
+
+    columnsLabel.textContent = `Columns: ${currentColumns}`;
+    
+
+    localStorage.setItem('gridColumns', currentColumns);
+}
+
+function toggleColumns() {
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+
+        currentColumns = currentColumns === 1 ? 2 : 1;
+    } else {
+
+        currentColumns = currentColumns >= 4 ? 2 : currentColumns + 1;
+    }
+    
+    updateGridColumns();
+}
+
+
+document.getElementById('columnsButton').addEventListener('click', toggleColumns);
+
+
+window.addEventListener('resize', () => {
+    const isMobile = window.innerWidth <= 768;
+    
+
+    if (isMobile && currentColumns > 2) {
+        currentColumns = 1;
+        updateGridColumns();
+    }
+
+    else if (!isMobile && currentColumns === 1) {
+        currentColumns = 3;
+        updateGridColumns();
+    }
+});
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadServerSettings();
+    loadSortPreference();
+    updateGridColumns();
+    fetchContainers();
+});
     </script>
 </body>
 </html>
