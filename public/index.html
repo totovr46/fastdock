@@ -760,13 +760,28 @@
                 
                 const apiUrl = currentBaseUrl ? `${currentBaseUrl}/api/containers` : '/api/containers';
                 const response = await fetch(apiUrl);
-                if (!response.ok) throw new Error('Network response was not ok');
                 
-                containers = await response.json();
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid data format received from server');
+                }
+                
+                containers = data.map(container => ({
+                    id: container.Id || container.id,
+                    name: (container.Names && container.Names[0].replace(/^\//, '')) || container.name,
+                    state: container.State || container.state,
+                    status: container.Status || container.status,
+                    serverName: container.serverName
+                }));
                 
                 sortContainers();
-                
                 await renderContainers();
+                
             } catch (error) {
                 console.error('Error fetching containers:', error);
                 showNotification('Error fetching containers: ' + error.message, true);
@@ -775,59 +790,68 @@
         }
         
         async function renderContainers(showServerName = false) {
-            const settings = await loadContainerSettings();
-            
-            if (containers.length === 0) {
-                containerGrid.innerHTML = '<div class="empty-message">No containers found</div>';
-                return;
-            }
-            
-            containerGrid.innerHTML = '';
-            
-            containers.forEach(container => {
-                const containerSettings = settings[container.id] || {};
-                const name = containerSettings.customName || container.name;
+            try {
+                const settings = await loadContainerSettings();
                 
-                let iconPath = containerSettings.iconPath;
-                if (!iconPath) {
-                    const containerName = container.name.replace(/[^a-zA-Z0-9]/g, '-');
-                    for (const [id, settings] of Object.entries(settings)) {
-                        if (settings.originalName === containerName && settings.iconPath) {
-                            iconPath = settings.iconPath;
-                            break;
-                        }
-                    }
+                if (!Array.isArray(containers) || containers.length === 0) {
+                    containerGrid.innerHTML = '<div class="empty-message">No containers found</div>';
+                    return;
                 }
                 
-                const isRunning = container.state === 'running';
+                containerGrid.innerHTML = '';
                 
-                const card = document.createElement('div');
-                card.className = 'container-card';
-                card.dataset.id = container.id;
-                card.dataset.name = name;
-                
-                card.innerHTML = `
-                    <button class="edit-button" onclick="showEditModal('${container.id}', '${name}')">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                    </button>
-                    <div class="status-indicator ${isRunning ? 'running' : 'stopped'}"></div>
-                    <div class="container-icon">
-                        ${iconPath ? `<img src="${iconPath}" alt="${name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : '◻'}
-                    </div>
-                    <div class="container-name">${name}</div>
-                    ${showServerName ? `<div class="container-server">${container.serverName || 'Local Server'}</div>` : ''}
-                    <div class="container-status">${container.status}</div>
-                    <button class="action-button ${isRunning ? 'stop-button' : 'start-button'}" 
-                            onclick="toggleContainer('${container.id}', ${isRunning})">
-                        ${isRunning ? 'Stop' : 'Start'}
-                    </button>
-                `;
-                
-                containerGrid.appendChild(card);
-            });
+                containers.forEach(container => {
+                    if (!container || !container.id || !container.name) {
+                        console.error('Container not valid:', container);
+                        return;
+                    }
+                    
+                    const containerSettings = settings[container.id] || {};
+                    const name = containerSettings.customName || container.name;
+                    
+                    let iconPath = containerSettings.iconPath;
+                    if (!iconPath && settings) {
+                        const containerName = container.name.replace(/[^a-zA-Z0-9]/g, '-');
+                        Object.entries(settings).forEach(([id, setting]) => {
+                            if (setting.originalName === containerName && setting.iconPath) {
+                                iconPath = setting.iconPath;
+                            }
+                        });
+                    }
+                    
+                    const isRunning = container.state === 'running';
+                    
+                    const card = document.createElement('div');
+                    card.className = 'container-card';
+                    card.dataset.id = container.id;
+                    card.dataset.name = name;
+                    
+                    card.innerHTML = `
+                        <button class="edit-button" onclick="showEditModal('${container.id}', '${name}')">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                        <div class="status-indicator ${isRunning ? 'running' : 'stopped'}"></div>
+                        <div class="container-icon">
+                            ${iconPath ? `<img src="${iconPath}" alt="${name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : '◻'}
+                        </div>
+                        <div class="container-name">${name}</div>
+                        ${showServerName ? `<div class="container-server">${container.serverName || 'Local Server'}</div>` : ''}
+                        <div class="container-status">${container.status || 'Unknown'}</div>
+                        <button class="action-button ${isRunning ? 'stop-button' : 'start-button'}" 
+                                onclick="toggleContainer('${container.id}', ${isRunning})">
+                            ${isRunning ? 'Stop' : 'Start'}
+                        </button>
+                    `;
+                    
+                    containerGrid.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error rendering containers:', error);
+                containerGrid.innerHTML = '<div class="error-message">Error rendering containers</div>';
+            }
         }
         
         async function toggleContainer(containerId, isCurrentlyRunning) {
