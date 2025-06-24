@@ -544,6 +544,65 @@
         .grid-cols-4 {
             grid-template-columns: repeat(4, 1fr) !important;
         }
+
+        .icon-search-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 5px;
+            padding: 8px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .search-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .search-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .icon-result {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .icon-result:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .icon-result img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+        
+        .icon-result span {
+            font-size: 0.8rem;
+            text-align: center;
+            word-break: break-word;
+        }
     </style>
 </head>
 <body>
@@ -607,6 +666,19 @@
                 <div class="modal-input-group">
                     <label>Container Name</label>
                     <input type="text" id="nameInput" class="modal-input">
+                </div>
+                <div class="modal-input-group">
+                    <label>Search icons from selfh.st/icons</label>
+                    <div class="icon-search-container">
+                        <input type="text" id="iconSearch" class="modal-input" placeholder="Search icon...">
+                        <button type="button" class="search-button" onclick="searchIcon()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="searchResults" class="search-results"></div>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="action-button stop-button" onclick="closeModal()">Cancel</button>
@@ -715,7 +787,18 @@
             containers.forEach(container => {
                 const containerSettings = settings[container.id] || {};
                 const name = containerSettings.customName || container.name;
-                const iconPath = containerSettings.iconPath;
+                
+                let iconPath = containerSettings.iconPath;
+                if (!iconPath) {
+                    const containerName = container.name.replace(/[^a-zA-Z0-9]/g, '-');
+                    for (const [id, settings] of Object.entries(settings)) {
+                        if (settings.originalName === containerName && settings.iconPath) {
+                            iconPath = settings.iconPath;
+                            break;
+                        }
+                    }
+                }
+                
                 const isRunning = container.state === 'running';
                 
                 const card = document.createElement('div');
@@ -1092,7 +1175,7 @@
                 if (currentSort === 'started') {
                     if (a.state === 'running' && b.state !== 'running') return -1;
                     if (a.state !== 'running' && b.state === 'running') return 1;
-                } else { // stopped
+                } else { 
                     if (a.state !== 'running' && b.state === 'running') return -1;
                     if (a.state === 'running' && b.state !== 'running') return 1;
                 }
@@ -1169,6 +1252,62 @@ document.addEventListener('DOMContentLoaded', () => {
     updateGridColumns();
     fetchContainers();
 });
-    </script>
+async function searchIcon() {
+    const searchInput = document.getElementById('iconSearch').value;
+    const resultsContainer = document.getElementById('searchResults');
+    
+    if (!searchInput.trim()) {
+        resultsContainer.innerHTML = '';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/search-icon/${searchInput}`);
+        const icons = await response.json();
+        
+        if (!icons.length) {
+            resultsContainer.innerHTML = '<p>No icon was found</p>';
+            return;
+        }
+        
+        resultsContainer.innerHTML = icons.map(icon => `
+            <div class="icon-result" onclick="selectIcon('${icon.url}')">
+                <img src="${icon.url}" alt="Icon">
+                <span>${icon.format}${icon.variant !== 'default' ? ` (${icon.variant})` : ''}</span>
+            </div>
+        `).join('');
+    } catch (error) {
+        showNotification('Error finding icons...', true);
+    }
+}
+
+async function selectIcon(url) {
+    try {
+        const response = await fetch('/api/download-icon', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                url,
+                containerId: currentContainerId
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Icona aggiornata con successo');
+            fetchContainers();
+            document.getElementById('searchResults').innerHTML = '';
+            document.getElementById('iconSearch').value = '';
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        showNotification('Errore nel download dell\'icona', true);
+    }
+}
+</script>
 </body>
 </html>

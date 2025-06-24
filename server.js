@@ -4,6 +4,8 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const https = require('https');
+const axios = require('axios');
 
 const app = express();
 const docker = new Docker();
@@ -89,7 +91,25 @@ app.post('/api/containers/settings/:id', upload.single('icon'), async (req, res)
   try {
     const containerId = req.params.id;
     const newName = req.body.name;
-    const iconPath = req.file ? `/assets/${req.file.filename}` : null;
+    
+    const containers = await docker.listContainers({ all: true });
+    const container = containers.find(c => c.Id === containerId);
+    if (!container) {
+      throw new Error('Container non trovato');
+    }
+    
+    const containerName = container.Names[0].replace(/^\//, '').replace(/[^a-zA-Z0-9]/g, '-');
+    
+    let iconPath = null;
+    if (req.file) {
+      const extension = req.file.filename.split('.').pop();
+      const newFilename = `${containerId}-${containerName}.${extension}`;
+      fs.renameSync(
+        `public/assets/${req.file.filename}`,
+        `public/assets/${newFilename}`
+      );
+      iconPath = `/assets/${newFilename}`;
+    }
     
     let settings = {};
     try {
@@ -100,7 +120,8 @@ app.post('/api/containers/settings/:id', upload.single('icon'), async (req, res)
     
     settings[containerId] = {
       customName: newName,
-      iconPath: iconPath || settings[containerId]?.iconPath
+      iconPath: iconPath || settings[containerId]?.iconPath,
+      originalName: containerName
     };
     
     fs.writeFileSync('public/containerSettings.json', JSON.stringify(settings, null, 2));
@@ -196,5 +217,84 @@ app.put('/api/app-settings/servers/:index', express.json(), (req, res) => {
   }
 });
 
+app.get('/api/search-icon/:name', async (req, res) => {
+  try {
+    const iconName = req.params.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const formats = ['svg', 'png', 'webp'];
+    const variants = ['', '-dark', '-light'];
+    
+    const availableIcons = [];
+
+    for (const format of formats) {
+      for (const variant of variants) {
+        const url = `https://cdn.jsdelivr.net/gh/selfhst/icons/${format}/${iconName}${variant}.${format}`;
+        try {
+          const response = await axios.head(url);
+          if (response.status === 200) {
+            availableIcons.push({
+              url,
+              format,
+              variant: variant || 'default'
+            });
+          }
+        } catch (error) {
+          continue;
+        }
+      }
+    }
+
+    if (availableIcons.length === 0) {
+      res.status(404).json({ error: 'Nessuna icona trovata' });
+    } else {
+      res.json(availableIcons);
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Errore nella ricerca dell\'icona', details: error.message });
+  }
+});
+
+app.post('/api/download-icon', async (req, res) => {
+  try {
+    const { url, containerId } = req.body;
+    
+    const containers = await docker.listContainers({ all: true });
+    const container = containers.find(c => c.Id === containerId);
+    if (!container) {
+      throw new Error('Container non trovato');
+    }
+    
+    const containerName = container.Names[0].replace(/^\//, '').replace(/[^a-zA-Z0-9]/g, '-');
+    
+    const response = await axios.get(url, { responseType: 'arraybuffer' });
+    const buffer = Buffer.from(response.data);
+    
+    const extension = url.split('.').pop();
+    const filename = `${containerId}-${containerName}.${extension}`;
+    
+    fs.writeFileSync(`public/assets/${filename}`, buffer);
+    
+    let settings = {};
+    try {
+      settings = JSON.parse(fs.readFileSync('public/containerSettings.json', 'utf8'));
+    } catch (err) {
+      settings = {};
+    }
+    
+    if (!settings[containerId]) {
+      settings[containerId] = {};
+    }
+    settings[containerId].iconPath = `/assets/${filename}`;
+    settings[containerId].originalName = containerName;
+    
+    fs.writeFileSync('public/containerSettings.json', JSON.stringify(settings, null, 2));
+    
+    res.json({ 
+      success: true, 
+      iconPath: `/assets/${filename}` 
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Errore nel download dell\'icona', details: error.message });
+  }
+});
 
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
